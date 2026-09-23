@@ -1,22 +1,49 @@
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'react-toastify'
 import Error from './Error'
 import type { DraftPatient } from '../types'
+import { usePatientStore } from '../store'
 
 export default function PatientForm() {
 
-    const { register, handleSubmit, formState: {errors} } = useForm<DraftPatient>()
+    const addPatient = usePatientStore(state => state.addPatient)
+    const activeId = usePatientStore(state => state.activeId)
+    const patients = usePatientStore(state => state.patients)
+    const updatePatient = usePatientStore(state => state.updatePatient)
+    
+    const { register, handleSubmit, setValue, formState: {errors}, reset } = useForm<DraftPatient>()
+    
+    useEffect(() => {
+        if(activeId) {
+            const activePatient = patients.filter( patient => patient.id === activeId)[0]
+            setValue('name', activePatient.name)
+            setValue('caretaker', activePatient.caretaker)
+            setValue('date', activePatient.date)
+            setValue('email', activePatient.email)
+            setValue('symptoms', activePatient.symptoms)
+        }
+    }, [activeId])
 
     const registerPatient = (data: DraftPatient) => {
-        console.log(data)
+        if(activeId) {
+            updatePatient(data)
+            toast.info('Paciente actualizado correctamente')
+        } else {
+            addPatient(data)
+            toast.success('Paciente registrado correctamente')
+        }
+        reset()
     }
+
   
     return (
         <div className="md:w-1/2 lg:w-2/5 mx-5">
-            <h2 className="font-black text-3xl text-center">Seguimiento Pacientes</h2>
+            <h2 className="font-black text-3xl text-center">Seguimiento de pacientes</h2>
 
             <p className="text-lg mt-5 text-center mb-10">
-                Añade Pacientes y {''}
-                <span className="text-indigo-600 font-bold">Administralos</span>
+                Añade pacientes y {''}
+                <span className="text-indigo-600 font-bold">adminístralos</span>
             </p>
 
             <form 
@@ -105,7 +132,7 @@ export default function PatientForm() {
                     </label>
                     <textarea  
                         id="symptoms"
-                        className="w-full p-3  border border-gray-100"  
+                        className="w-full p-3  border border-gray-100"
                         placeholder="Síntomas del paciente"
                         {...register('symptoms', {
                             required: 'Los síntomas son obligatorios'
